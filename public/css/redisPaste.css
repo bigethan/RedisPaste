@@ -1,0 +1,71 @@
+.section
+{
+    border-bottom: 10px groove #ccc;
+}
+
+.section h2
+{
+    margin-bottom: 0;
+}
+
+#edit_paste
+{
+   display: none;
+}
+
+#edit_paste h2
+{
+   color: #c00;
+}
+
+#paste_note, #edit_paste_note
+{
+    height: 2em;
+    width: 100%;
+}
+
+#paste_body, #edit_paste_body
+{
+    height: 5em;
+    width: 100%;
+}
+
+#new_paste
+{
+    padding-bottom: 1em;
+}
+
+#old_paste pre
+{
+    max-height: 100px !important;
+    overflow: scroll;
+}
+
+.oldie
+{
+    margin: 1em 1em 1em 0;
+    float: left;
+    width: 30%;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #fff;
+    height: 75px;
+    overflow: hidden;
+}
+
+.oldie:hover
+{
+
+}
+
+.oldie p
+{
+    margin-bottom: .5em;
+}
+
+.right_tool
+{
+    float: right;
+    background-color: #eee;
+    padding: 1em;
+}

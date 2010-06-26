@@ -1,0 +1,22 @@
+Redis Paste
+----------
+A Pastie that uses Redis as it's datastore.
+
+Requires:
+PHP 5
+A Redis Server
+
+Installation:
+-Copy the RedisPaste directory to your webserver
+-Edit the settings in lib/RedisPaste.class.php
+-Enter the URL to the index.php
+
+Included Packages:
+Redisent 
+	http://github.com/jdp/redisent 
+	PHP Redis Interface for the modest
+
+Syntaxhighlighter 
+	http://alexgorbatchev.com/wiki/SyntaxHighlighter
+	Syntax Higlighting JS
+	slightly modified so that line numbers aren't selected when highlighting
