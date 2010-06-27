@@ -19,4 +19,58 @@ Redisent
 Syntaxhighlighter 
 	http://alexgorbatchev.com/wiki/SyntaxHighlighter
 	Syntax Higlighting JS
-	slightly modified so that line numbers aren't selected when highlighting
+	slightly modified so that line numbers aren't selected when copying sections of a paste, basically switching a DIV and TABLE for OL & LI.The patch is:
+
+*** shCore.js	2010-06-27 12:58:36.000000000 -0700
+---  shCore.orig.js	2010-06-24 12:26:04.000000000 -0700
+***************
+*** 1460,1472 ****
+  				lineClass += ' highlighted';
+  			
+  			code += 
+!             '<li class="line ' + lineClass + '">'
+! 				+ '<span class="content">'
+! 				    + (spaces != null ? '<code class="spaces">' + spaces.replace(' ', '&nbsp;') + '</code>' : '')
+! 				    + line
+!                 + '</span>'
+!             + '</li>'
+!             ;
+  		}
+  		
+  		return code;
+--- 1460,1477 ----
+  				lineClass += ' highlighted';
+  			
+  			code += 
+! 				'<div class="line ' + lineClass + '">'
+! 					+ '<table>'
+! 						+ '<tr>'
+! 							+ (hasGutter ? '<td class="number"><code>' + lineNumber + '</code></td>' : '')
+! 							+ '<td class="content">'
+! 								+ (spaces != null ? '<code class="spaces">' + spaces.replace(' ', '&nbsp;') + '</code>' : '')
+! 								+ line
+! 							+ '</td>'
+! 						+ '</tr>'
+! 					+ '</table>'
+! 				+ '</div>'
+! 				;
+  		}
+  		
+  		return code;
+***************
+*** 1556,1562 ****
+  			this.params.toolbar = this.params.gutter = false;
+  		
+  		this.div = div = this.create('DIV');
+! 		this.lines = this.create('OL');
+  		this.lines.className = 'lines';
+  
+  		className = 'syntaxhighlighter';
+--- 1561,1567 ----
+  			this.params.toolbar = this.params.gutter = false;
+  		
+  		this.div = div = this.create('DIV');
+! 		this.lines = this.create('DIV');
+  		this.lines.className = 'lines';
+  
+  		className = 'syntaxhighlighter';
