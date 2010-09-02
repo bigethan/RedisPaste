@@ -144,108 +144,126 @@
                 background-color: #eee;
                 padding: 1em;
             }
+            #trouble
+            {
+                text-align: center;
+                padding-top: 1em;
+                color: #aaa;
+            }
 
         </style>
     </head>
     
     <body>
         <div class="container">
-            <?php if(!empty($paste)) { ?>
-                <div id="the_paste" class="section">
-                    <h2>The Paste You're Looking for</h2>
-                    <p id="the_paste_date"><?php echo $redisPaste->prettyLang($paste['lang']) ?> pasted at <?php echo date('g:ia \o\n l, F j', $paste['date']) ?> [<a href="#" onclick="pasteEditInterface()">Edit This Paste</a>]</p>
-                     <div id="edit_paste" class="section">
-                <h2>Edit This Paste</h2>
-                <form method="post">
-                <input type="hidden" name="id" value="<?php echo $paste['id']; ?>">
-                    <div>
-                        Note about this Paste:<br>
-                        <textarea name="note" id="edit_paste_note" tabindex="11"><?php echo $paste['note'] ?></textarea>
+            <?php if($redisPaste->redisError) { ?>
+                <div id="trouble">
+                    <h3>Something Has Gone Wrong</h3>
+                    <p>
+                    <?php echo $redisPaste->redisError ?>
+                    </p>
+                    <p>
+                    <a href="<?php echo $redisPaste->URL_PATH ?>">Paste Home</a>
+                    </p>
+                </div>
+            <?php } else { ?>
+                <?php if(!empty($paste)) { ?>
+                    <div id="the_paste" class="section">
+                        <h2>The Paste You're Looking for</h2>
+                        <p id="the_paste_date"><?php echo array_search($paste['lang'], array_merge($mainLangs, $otherLangs)) ?> pasted at <?php echo date('g:ia \o\n l, F j', $paste['date']) ?> [<a href="#" onclick="pasteEditInterface()">Edit This Paste</a>]</p>
+                         <div id="edit_paste" class="section">
+                    <h2>Edit This Paste</h2>
+                    <form method="post">
+                    <input type="hidden" name="id" value="<?php echo $paste['id']; ?>">
+                        <div>
+                            Note about this Paste:<br>
+                            <textarea name="note" id="edit_paste_note" tabindex="11"><?php echo $paste['note'] ?></textarea>
+                        </div>
+                        <div>
+                            The Paste is in 
+                            <select name="lang" tabindex="12">
+                                <?php foreach($mainLangs as $k =>$l) { ?>
+                                    <option value="<?php echo $l ?>"<?php if( $paste['lang'] == $l){ echo ' selected="selected"'; } ?>><?php echo $k ?></option>
+                                <?php } ?>
+                                    <optgroup label="Lesser Langs"></optgroup>
+                                <?php foreach($otherLangs as $k => $l) { ?>
+                                    <option value="<?php echo $l ?>"<?php if( $paste['lang'] == $l){ echo ' selected="selected"'; } ?>><?php echo $k ?></option>
+                                <?php } ?>
+                            </select>: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="submit" value="Save Edit" tabindex="15"><br>
+                            <textarea name="body" id="edit_paste_body" tabindex="14"><?php echo $paste['body'] ?></textarea>
+                        </div>
+                        
+                        </form>
                     </div>
-                    <div>
-                        The Paste is in 
-                        <select name="lang" tabindex="12">
-                            <?php foreach($redisPaste->mainLangs as $k =>$l) { ?>
-                                <option value="<?php echo $l ?>"<?php if( $paste['lang'] == $l){ echo ' selected="selected"'; } ?>><?php echo $k ?></option>
-                            <?php } ?>
-                                <optgroup label="Lesser Langs"></optgroup>
-                            <?php foreach($redisPaste->otherLangs as $k => $l) { ?>
-                                <option value="<?php echo $l ?>"<?php if( $paste['lang'] == $l){ echo ' selected="selected"'; } ?>><?php echo $k ?></option>
-                            <?php } ?>
-                        </select>: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="submit" value="Save Edit" tabindex="15"><br>
-                        <textarea name="body" id="edit_paste_body" tabindex="14"><?php echo $paste['body'] ?></textarea>
+                         <div id="the_paste">
+                        <p id="the_paste_note" class="success"><?php echo $paste['note'] ?></p>
+                        <pre class="brush: <?php echo $paste['lang']; ?>"><?php echo $paste['body'] ?>
+                        </pre>
+                        </div>
                     </div>
-                    
+                <?php } ?>
+                
+                
+                <div id="new_paste" class="section">
+                    <h2>Create a New Paste of Your Own</h2>
+                    <form method="post">
+                        <div>
+                            Note about this Paste:<br>
+                            <textarea name="note" id="paste_note" tabindex="1" onfocus="if(!noteCleared){this.innerHTML = ''; noteCleared = true;};">I'm too lazy to add a description.</textarea>
+                        </div>
+                        <div>
+                            The Paste is in 
+                            <select name="lang" tabindex="2">
+                                <?php foreach($mainLangs as $k =>$l) { ?>
+                                    <option value="<?php echo $l ?>"><?php echo $k ?></option>
+                                <?php } ?>
+                                    <optgroup label="Lesser Langs"></optgroup>
+                                <?php foreach($otherLangs as $k => $l) { ?>
+                                    <option value="<?php echo $l ?>"><?php echo $k ?></option>
+                                <?php } ?>
+                            </select>: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="submit" value="Save Paste" tabindex="5"><br>
+                            <textarea name="body" id="paste_body" tabindex="4" onfocus="if(!pasteCleared){this.innerHTML = ''; pasteCleared = true;};">Paste Goes Here</textarea>
+                        </div>
+                        
                     </form>
                 </div>
-                     <div id="the_paste">
-                    <p id="the_paste_note" class="success"><?php echo $paste['note'] ?></p>
-                    <pre class="brush: <?php echo $paste['lang']; ?>"><?php echo $paste['body'] ?>
-                    </pre>
-                    </div>
-                </div>
-            <?php } ?>
-            
-            
-            <div id="new_paste" class="section">
-                <h2>Create a New Paste of Your Own</h2>
-                <form method="post">
-                    <div>
-                        Note about this Paste (searchable):<br>
-                        <textarea name="note" id="paste_note" tabindex="1" onfocus="if(!noteCleared){this.innerHTML = ''; noteCleared = true;};">I'm too lazy to add a description.</textarea>
-                    </div>
-                    <div>
-                        The Paste is in 
-                        <select name="lang" tabindex="2">
-                            <?php foreach($redisPaste->mainLangs as $k =>$l) { ?>
-                                <option value="<?php echo $l ?>"><?php echo $k ?></option>
-                            <?php } ?>
-                                <optgroup label="Lesser Langs"></optgroup>
-                            <?php foreach($redisPaste->otherLangs as $k => $l) { ?>
-                                <option value="<?php echo $l ?>"><?php echo $k ?></option>
-                            <?php } ?>
-                        </select>: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="submit" value="Save Paste" tabindex="5"><br>
-                        <textarea name="body" id="paste_body" tabindex="4" onfocus="if(!pasteCleared){this.innerHTML = ''; pasteCleared = true;};">Paste Goes Here</textarea>
-                    </div>
-                    
-                </form>
-            </div>
-            
-            <a name="oldies"></a>
-            <?php if(!empty($pastPastes) || $searchedPastes) { ?>
-                <div id="old_paste" class="section">
-                        <div class="right_tool">
-                           <form action="" method="GET" style="margin-right: 1em; padding-right: 1em; border-right: 4px solid #ccc; float: left;">
-                                 <input type="text" name="rpq" value="<?php echo htmlentities(urldecode($_GET['rpq']))?>">
-                                 <input type="submit" value="search descriptions">
-                              </form>
-                            <?php if (!is_null($nextPage) || !is_null($prevPage)) { ?>
-                                <?php if (!is_null($prevPage)) { ?>
-                                    <a href="?page=<?php echo $prevPage; ?>#oldies">&larr; prev</a> &nbsp;&nbsp;&nbsp;
+                
+                <a name="oldies"></a>
+                <?php if(!empty($pastPastes) || $searchedPastes) { ?>
+                    <div id="old_paste" class="section">
+                            <div class="right_tool">
+                               <form action="" method="GET" style="margin-right: 1em; padding-right: 1em; border-right: 4px solid #ccc; float: left;">
+                                     <input type="text" name="rpq" value="<?php echo htmlentities(urldecode($_GET['rpq']))?>">
+                                     <input type="submit" value="search descriptions">
+                                  </form>
+                                <?php if (!is_null($nextPage) || !is_null($prevPage)) { ?>
+                                    <?php if (!is_null($prevPage)) { ?>
+                                        <a href="?page=<?php echo $prevPage; ?>#oldies">&larr; prev</a> &nbsp;&nbsp;&nbsp;
+                                    <?php } ?>
+                                    <?php if (!is_null($nextPage)) { ?>
+                                        <a href="?page=<?php echo $nextPage; ?>#oldies">next &rarr;</a>
+                                    <?php } ?>
                                 <?php } ?>
-                                <?php if (!is_null($nextPage)) { ?>
-                                    <a href="?page=<?php echo $nextPage; ?>#oldies">next &rarr;</a>
-                                <?php } ?>
-                            <?php } ?>
-                        </div>
-                    <h2>
-                    <?php echo $totalPastes ?> Copy Pastas 
-                    <?php if ($searchedPastes) { ?>
-                    Containing: <?php echo htmlentities(urldecode($_GET['rpq'])); ?>
-                    <?php } else { ?>
-                    From the Past (Page <?php echo $page ?> of <?php echo $totalPages ?>)
-                    <?php } ?>
-                    </h2>
-                    <?php foreach((array)$pastPastes as $k => $p) { ?>
-                        <div class="oldie">
-                            <p><?php echo $redisPaste->prettyLang($p['lang']) ?> pasted on <?php echo date('F j', $p['date']) ?> [<a href="?paste=<?php echo $k; ?>&page=<?php echo $page; ?>">linky</a>]</p>
-                            <p><?php if(!$p['note']){ $p['note'] = 'No Description Given'; } echo $p['note'] ?> [<?php echo (int)$p['size']  ?> bytes]</p>
-                        </div>
-                    <?php } ?>
-                <div class="clear"></div>
-                </div>
+                            </div>
+                        <h2>
+                        <?php echo $totalPastes ?> Copy Pastas 
+                        <?php if ($searchedPastes) { ?>
+                        Containing: <?php echo htmlentities(urldecode($_GET['rpq'])); ?>
+                        <?php } else { ?>
+                        From the Past (Page <?php echo $page ?> of <?php echo $totalPages ?>)
+                        <?php } ?>
+                        </h2>
+                        <?php foreach((array)$pastPastes as $k => $p) { ?>
+                            <div class="oldie">
+                                <p><?php echo array_search($p['lang'], array_merge($mainLangs, $otherLangs)) ?> pasted on <?php echo date('F j', $p['date']) ?> [<a href="?paste=<?php echo $k; ?>&page=<?php echo $page; ?>">linky</a>]</p>
+                                <p><?php if(!$p['note']){ $p['note'] = 'No Description Given'; } echo $p['note'] ?> [<?php echo (int)$p['size']  ?> bytes]</p>
+                            </div>
+                        <?php } ?>
+                    <div class="clear"></div>
+                    </div>
+                <?php } ?>
+                DataStore is <a href="http://code.google.com/p/redis/">Redis</a>, Redis PHP Interface is <a href="http://github.com/nrk/predis">Predis</a>, CSS is <a href="http://www.blueprintcss.org/">Blueprint</a>, Code Coloring is <a href="http://alexgorbatchev.com/wiki/SyntaxHighlighter">SyntaxHighlighter</a>
             <?php } ?>
-            DataStore is <a href="http://code.google.com/p/redis/">Redis</a>, Redis PHP Interface is <a href="http://github.com/jdp/redisent/tree/master">Redisent</a>, CSS is <a href="http://www.blueprintcss.org/">Blueprint</a>, Code Coloring is <a href="http://alexgorbatchev.com/wiki/SyntaxHighlighter">SyntaxHighlighter</a>
         </div>
         </body>
 </html>

@@ -4,27 +4,29 @@ require_once 'RedisPaste.class.php';
 $redisPaste = new RedisPaste($redisHost);
 
 /* A New Paste? */
-if($_POST) {
+if($_POST && !$redisPaste->redisError) {
     $newId = $redisPaste->savePaste($_POST);    
     /* redir to the new paste */
-    header('Location: ' . $urlPath . '?paste=' . $newId);
-    exit;
+    if(!$redisPaste->redisError) {
+        header('Location: ' . $urlPath . '?paste=' . $newId);
+        exit;
+    }
 }
 
 /* An Old Paste?  */
-if($_GET['paste']) {
+if($_GET['paste'] && !$redisPaste->redisError) {
     $paste = $redisPaste->getPaste($_GET['paste']);
 }
 
 /* Show searched pastes, or recent pastes? */
-if($_GET['rpq']) {
+if($_GET['rpq'] && !$redisPaste->redisError) {
    $searchedPastes = true;
    $pastPastes = $redisPaste->searchPastes(urldecode($_GET['rpq']));
    $totalPastes = sizeOf($pastPastes);
-} else {
+} else if (!$redisPaste->redisError) {
 
    /* Past Pastes */
-   $totalPastes = $redisPaste->LLEN('paste:history');
+   $totalPastes = $redisPaste->llen('paste:history');
    
    /* # of past pastes to show per page */
    $offset = 12;
@@ -43,7 +45,7 @@ if($_GET['rpq']) {
    
    /* get the range of ids */
    $pastStart = ($page - 1) * $offset;
-   $pastPasteKeys = $redisPaste->LRANGE('paste:history', 
+   $pastPasteKeys = $redisPaste->lrange('paste:history', 
                                             $pastStart, // start of the range
                                             $pastStart + $offset - 1 // end of the range
                                            );
@@ -51,3 +53,32 @@ if($_GET['rpq']) {
    /* Don't need the body data for the history display */
    $pastPastes = $redisPaste->getPastes((array)$pastPasteKeys, array('body'));
 }
+
+/* the language options for the pulldown */
+/**
+ * The languanges to put at the top of the pulldown
+ * The key is for humans, and the value 
+ * is what matches the  syntaxHighlighter's name 
+ * for the lang.
+ */
+$mainLangs = array(
+    'PHP' => 'php',
+    'CSS' => 'css',
+    'JavaScript' => 'javascript',
+    'HTML / XML' => 'xml',
+    'Text' => 'text'
+);
+
+/**
+* Less important languages :-) in the same format as
+* the above $mainLangs.
+*/                         
+$otherLangs = array(
+    'ActionScript3' => 'actionscript3',
+    'Bash' => 'bash',
+    'Perl' => 'perl',
+    'Ruby' => 'ruby',
+    'Python' => 'python',
+    'SQL' => 'sql',
+    'XML' => 'xml'
+); 
