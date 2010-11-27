@@ -1,6 +1,6 @@
 Redis Paste
 ----------
-A Pastie that uses Redis as it's datastore.
+A searchable anonymous pastie that uses Redis as it's datastore.
 
 Requires:
 PHP 5
@@ -13,9 +13,9 @@ Installation:
 
 Included Packages:
 Predis 
-	http://github.com/nrk/predis 
-    Flexible and feature-complete PHP client library for Redis
+  http://github.com/nrk/predis 
+  Flexible and feature-complete PHP client library for Redis
 
 Syntaxhighlighter 
-	http://alexgorbatchev.com/wiki/SyntaxHighlighter
-	Syntax Higlighting JS
+  http://alexgorbatchev.com/wiki/SyntaxHighlighter
+  Syntax Higlighting JS
