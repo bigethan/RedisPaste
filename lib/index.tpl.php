@@ -195,7 +195,7 @@
                                 <?php } ?>
                             </div>
                         <h2>
-                        <?php echo $totalPastes ?> Copy Pastas 
+                        <?php echo number_format($totalPastes) ?> Copy Pastas 
                         <?php if ($searchedPastes) { ?>
                         Containing: <?php echo htmlentities(urldecode($_GET['rpq'])); ?>
                         <?php } else { ?>
@@ -211,7 +211,7 @@
                     <div class="clear"></div>
                     </div>
                 <?php } ?>
-                DataStore is <a href="http://code.google.com/p/redis/">Redis</a>, Redis PHP Interface is <a href="http://github.com/nrk/predis">Predis</a>, CSS is <a href="http://www.blueprintcss.org/">Blueprint</a>, Code Coloring is <a href="http://alexgorbatchev.com/wiki/SyntaxHighlighter">SyntaxHighlighter</a>
+                DataStore is <a href="https://github.com/antirez/redis">Redis</a>, Redis PHP Interface is <a href="http://github.com/nrk/predis">Predis</a>, CSS is <a href="http://www.blueprintcss.org/">Blueprint</a>, Code Coloring is <a href="http://alexgorbatchev.com/wiki/SyntaxHighlighter">SyntaxHighlighter</a>
             <?php } ?>
         </div>
         </body>
