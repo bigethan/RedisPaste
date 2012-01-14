@@ -24,7 +24,7 @@
     width: 100%;
 }
 
-#paste_body, #edit_paste_body
+#paste_body, #edit_paste_body, #comment_body
 {
     height: 5em;
     width: 100%;
@@ -53,11 +53,6 @@
     overflow: hidden;
 }
 
-.oldie:hover
-{
-
-}
-
 .oldie p
 {
     margin-bottom: .5em;
@@ -68,4 +63,10 @@
     float: right;
     background-color: #eee;
     padding: 1em;
+}
+#trouble
+{
+    text-align: center;
+    padding-top: 1em;
+    color: #aaa;
 }

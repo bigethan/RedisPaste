@@ -30,20 +30,16 @@
              * Grows the paste textarea depending on the
              * size of the content pasted
              */
-            function FitToContent(id, maxHeight)
+            function FitToContent(el, maxHeight)
             {
-               var text = id && id.style ? id : document.getElementById(id);
-               if ( !text )
-                  return;
-            
-               var adjustedHeight = text.clientHeight;
+               var adjustedHeight = el.clientHeight;
                if ( !maxHeight || maxHeight > adjustedHeight )
                {
-                  adjustedHeight = Math.max(text.scrollHeight, adjustedHeight);
+                  adjustedHeight = Math.max(el.scrollHeight, adjustedHeight);
                   if ( maxHeight )
                      adjustedHeight = Math.min(maxHeight, adjustedHeight);
-                  if ( adjustedHeight > text.clientHeight )
-                     text.style.height = adjustedHeight + "px";
+                  if ( adjustedHeight > el.clientHeight )
+                     el.style.height = adjustedHeight + "px";
                }
             }
             
@@ -61,9 +57,15 @@
              * start wtching the paste textarea 
              */
             window.onload = function() {
-                document.getElementById("paste_body").onkeyup = function() {
-                  FitToContent( this, 1000 )
-                };
+                var tas, i;
+
+                tas = document.getElementsByTagName("textarea");
+                
+                for(i = 0; tas.length > i; i++){
+                    tas[i].onkeyup = function() {
+                      FitToContent( this, 1000 )
+                    }
+                }
             }
 
             SyntaxHighlighter.config.clipboardSwf = 'js/syntaxhighlighter/scripts/clipboard.swf';
@@ -75,83 +77,9 @@
         
         <link rel="stylesheet" href="css/blueprint/screen.css" type="text/css" media="screen, projection">
         <link rel="stylesheet" href="css/blueprint/print.css" type="text/css" media="print">
-        <link type="text/css" rel="stylesheet" href="syntaxhighlighter/styles/shCore.css"/>
-        <link type="text/css" rel="stylesheet" href="syntaxhighlighter/styles/shThemeDefault.css"/>
-        <style type="text/css">
-        	.section
-            {
-                border-bottom: 10px groove #ccc;
-            }
-            
-            .section h2
-            {
-                margin-bottom: 0;
-            }
-            
-            #edit_paste
-            {
-               display: none;
-            }
-            
-            #edit_paste h2
-            {
-               color: #c00;
-            }
-            
-            #paste_note, #edit_paste_note
-            {
-                height: 2em;
-                width: 100%;
-            }
-            
-            #paste_body, #edit_paste_body
-            {
-                height: 5em;
-                width: 100%;
-            }
-            
-            #new_paste
-            {
-                padding-bottom: 1em;
-            }
-            
-            #old_paste pre
-            {
-                max-height: 100px !important;
-                overflow: scroll;
-            }
-            
-            .oldie
-            {
-                margin: 1em 1em 1em 0;
-                float: left;
-                width: 30%;
-                border-width: 1px;
-                border-style: solid;
-                border-color: #fff;
-                height: 75px;
-                overflow: hidden;
-            }
-            
-            .oldie p
-            {
-                margin-bottom: .5em;
-            }
-            
-            .right_tool
-            {
-                float: right;
-                background-color: #eee;
-                padding: 1em;
-            }
-            #trouble
-            {
-                text-align: center;
-                padding-top: 1em;
-                color: #aaa;
-            }
-
-        </style>
+        <link type="text/css" rel="stylesheet" href="syntaxhighlighter/styles/shCore.css">
+        <link type="text/css" rel="stylesheet" href="syntaxhighlighter/styles/shThemeDefault.css">
+        <link type="text/css" rel="stylesheet" href="css/RedisPaste.css">
     </head>
     
     <body>
@@ -171,34 +99,54 @@
                     <div id="the_paste" class="section">
                         <h2>The Paste You're Looking for</h2>
                         <p id="the_paste_date"><?php echo array_search($paste['lang'], array_merge($mainLangs, $otherLangs)) ?> pasted at <?php echo date('g:ia \o\n l, F j', $paste['date']) ?> [<a href="#" onclick="pasteEditInterface()">Edit This Paste</a>]</p>
-                         <div id="edit_paste" class="section">
-                    <h2>Edit This Paste</h2>
-                    <form method="post">
-                    <input type="hidden" name="id" value="<?php echo $paste['id']; ?>">
-                        <div>
-                            Note about this Paste:<br>
-                            <textarea name="note" id="edit_paste_note" tabindex="11"><?php echo $paste['note'] ?></textarea>
+                        <div id="edit_paste" class="section">
+                            <h2>Edit This Paste</h2>
+                            <form method="post">
+                            <input type="hidden" name="id" value="<?php echo $paste['id']; ?>">
+                            <input type="hidden" name="paste_action" value="1">
+                            <div>
+                                Note about this Paste:<br>
+                                <textarea name="note" id="edit_paste_note" tabindex="11"><?php echo $paste['note'] ?></textarea>
+                            </div>
+                            <div>
+                                The Paste is in 
+                                <select name="lang" tabindex="12">
+                                    <?php foreach($mainLangs as $k =>$l) { ?>
+                                        <option value="<?php echo $l ?>"<?php if( $paste['lang'] == $l){ echo ' selected="selected"'; } ?>><?php echo $k ?></option>
+                                    <?php } ?>
+                                        <optgroup label="Lesser Langs"></optgroup>
+                                    <?php foreach($otherLangs as $k => $l) { ?>
+                                        <option value="<?php echo $l ?>"<?php if( $paste['lang'] == $l){ echo ' selected="selected"'; } ?>><?php echo $k ?></option>
+                                    <?php } ?>
+                                </select>: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="submit" value="Save Edit" tabindex="15"><br>
+                                <textarea name="body" id="edit_paste_body" tabindex="14"><?php echo $paste['body'] ?></textarea>
+                            </div>
+                            
+                            </form>
                         </div>
-                        <div>
-                            The Paste is in 
-                            <select name="lang" tabindex="12">
-                                <?php foreach($mainLangs as $k =>$l) { ?>
-                                    <option value="<?php echo $l ?>"<?php if( $paste['lang'] == $l){ echo ' selected="selected"'; } ?>><?php echo $k ?></option>
+                        <div id="the_paste">
+                            <p id="the_paste_note" class="success"><?php echo $paste['note'] ?></p>
+                            <?php if (!empty($paste['comments'])) { ?>
+                            <ul id="paste_comments">
+                                <?php foreach ($paste['comments'] as $comment) { ?>
+                                <li>
+                                <?php echo $comment['author'] ?> noted:<br> 
+                                <pre><?php echo $comment['body'] ?></pre>
+                                </li> 
                                 <?php } ?>
-                                    <optgroup label="Lesser Langs"></optgroup>
-                                <?php foreach($otherLangs as $k => $l) { ?>
-                                    <option value="<?php echo $l ?>"<?php if( $paste['lang'] == $l){ echo ' selected="selected"'; } ?>><?php echo $k ?></option>
-                                <?php } ?>
-                            </select>: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="submit" value="Save Edit" tabindex="15"><br>
-                            <textarea name="body" id="edit_paste_body" tabindex="14"><?php echo $paste['body'] ?></textarea>
+                            </ul>
+                            <?php } ?>
+                            <pre class="brush: <?php echo $paste['lang']; ?>"><?php echo $paste['body'] ?>
+                            </pre>
                         </div>
-                        
-                        </form>
-                    </div>
-                         <div id="the_paste">
-                        <p id="the_paste_note" class="success"><?php echo $paste['note'] ?></p>
-                        <pre class="brush: <?php echo $paste['lang']; ?>"><?php echo $paste['body'] ?>
-                        </pre>
+                        <div id="paste_comment">
+                            <p>Comment On This Paste</p>
+                            <form method="post">
+                            <input type="hidden" name="paste_id" value="<?php echo $paste['id']; ?>">
+                            <input type="hidden" name="comment_action" value="1">
+                            Your Name: <input type="text" name="author" value="<?php echo $commenter ?>"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="submit" value="Save Comment">
+                            <textarea id="comment_body" name="body"></textarea>
+                            </form>
                         </div>
                     </div>
                 <?php } ?>
@@ -207,6 +155,7 @@
                 <div id="new_paste" class="section">
                     <h2>Create a New Paste of Your Own</h2>
                     <form method="post">
+                    <input type="hidden" name="paste_action" value="1">
                         <div>
                             Note about this Paste:<br>
                             <textarea name="note" id="paste_note" tabindex="1" onfocus="if(!noteCleared){this.innerHTML = ''; noteCleared = true;};">I'm too lazy to add a description.</textarea>

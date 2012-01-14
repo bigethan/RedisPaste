@@ -8,17 +8,28 @@
  *    global:pasteIds = string int -- INCR on each paste creation
  *    paste:history => list of all paste ids
  *
- *    Stored in Redis Hashes
- *    paste:$id body => string $text --the paste
- *    paste:$id note => string $text --the deck of the paste
- *    paste:$id date => string timestamp
- *    paste:$id lang => string language the paste is in (PHP, Javascript, etc)
- *    paste:$id size => int size of paste in bytes
+ *    Stored in Hash
+ *    paste:$id.body        string  the paste
+ *    paste:$id.note        string  the deck of the paste
+ *    paste:$id.date        string  timestamp paste was created
+ *    paste:$id.lang        string  language the paste is in
+ *    paste:$id.size        int     size of paste in bytes
+ *    
+ *    comments:$id.author   string  name of the commenter
+ *    comments:$id.body     string  body of the comment
+ *    comments:$id.date     string  timestamp of the comment
+ *    
+ *    Store in List
+ *    paste:$id:comments    list    ids of comments on the paste
+ *  
  *
  *    search:[\w] => set of paste ids to
  *
  * @extends Predis_Client
  */
+
+date_default_timezone_set('America/Los_Angeles');
+
 require 'predis/Predis.php';
 class RedisPaste extends Predis_Client {
 
@@ -27,7 +38,7 @@ class RedisPaste extends Predis_Client {
     const REDIS_PORT = 6379;
     const REDIS_DB = 1;
     const REDIS_PASSWORD = null;
-    const URL_PATH = '/~ethan/code/redispaste/public/index.php';
+    const URL_PATH = '/index.php';
     /* END SETINGS */
     
     
@@ -39,9 +50,12 @@ class RedisPaste extends Predis_Client {
      */                       
     public $pasteAttrs = array(
         'body', 'note', 'date',
-        'lang', 'size'
+        'lang', 'size', 'comments'
     );
     
+    /**
+     * Set to true when catching an exception
+     */
     public $redisError = false;
 
     /**
@@ -106,10 +120,10 @@ class RedisPaste extends Predis_Client {
      * builds the string of hash keys for redis
      *
      * @access public
-     * @param mixed Array $skipKeys (default = array())
+     * @param mixed Array $skipKeys keys to omit
      * $return string 'key1 key 2 key 3'
      */
-    public function buildPasteHashKeys($skipKeys = array())
+    public function buildPasteHashKeys(Array $skipKeys)
     {
         foreach($this->pasteAttrs as $a) {
             if(empty($skipKeys) || !in_array($a, $skipKeys)) {
@@ -122,7 +136,7 @@ class RedisPaste extends Predis_Client {
     /**
      * getPastes function.
      * builds the total list of keys for all the pastes 
-     * in the $ids array, and then gets them with a single call
+     * in the $ids array, and then gets them
      * $skipKeys is a blacklist array for data that you don't want.
      *
      * @access public
@@ -130,18 +144,15 @@ class RedisPaste extends Predis_Client {
      * @param mixed Array $skipKeys. (default: array()
      * @return array the array of pastes
      */
-    public function getPastes(Array $ids, Array $skipKeys = array()) {
+    public function getPastes(Array $ids, Array $skipKeys = null) {
     
         if(empty($ids) || !is_array($ids)) {
             return null;
         }
         
-        /* build key list for multi get */
-        $keys = $this->buildPasteHashKeys($skipKeys);
-        
         try {
             foreach($ids as $k) {
-                $pastes[$k] = $this->getPaste($k, null, $keys);
+                $pastes[$k] = $this->getPaste($k, (array)$skipKeys);
             } 
         } catch (Exception $e) {
             $this->redisError = $e->getMessage() . " - Couldn't get pastes";
@@ -161,26 +172,47 @@ class RedisPaste extends Predis_Client {
      * @param mixed Array $skipKeys. (default: array()
      * @return array the array of data for the paste
      */
-    public function getPaste($id, $skipKeys = array(), $rawKeyList = null)
+    public function getPaste($id, $skipKeys = array())
     {
-        
-        if($rawKeyList) {
-            $pasteKeys = $rawKeyList;
-        } else {
-            $pasteKeys = $this->buildPasteHashKeys($skipKeys);
-        }
+        $pasteKeys = $this->buildPasteHashKeys($skipKeys);
         
         try {
+            //get bare paste data
             $pasteData = $this->hmget('paste:' . $id, $pasteKeys);
+            //get comment list
+            if(in_array('comments', $pasteKeys)) {
+                $commentIds = $this->lrange('paste:' . $id . ':comments', 0, -1);
+                if(!empty($commentIds)) {
+                    $key = array_search('comments', $pasteKeys);
+                    $pasteData[$key] = $this->__getPasteComments($commentIds);
+                }
+            }
+
         } catch (Exception $e) {
-            $this->redisError = $e->getMessage() . ' - Paste ' . $id . 'not found';
+            $this->redisError = $e->getMessage() . ' - Trouble with ' . $id;
             return;
         }
         
         $paste = array_combine($pasteKeys, $pasteData);
         $paste['id'] = $id;
+
+        /* If there are comments on the paste, get em */
+        
         
         return $paste;
+    }
+
+    /**
+     * get the comments by the passed array of ids
+     * @param  Array  $ids a list of comment ids
+     * @return Array  the comments
+     */
+    private function __getPasteComments(Array $ids) 
+    {
+        foreach($ids as $id) {
+            $comments[] = $this->hgetall('comment:' . $id);
+        }
+        return $comments;
     }
 
     /**
@@ -220,9 +252,11 @@ class RedisPaste extends Predis_Client {
         try{
             //make search keys for bits that have at least
             //3 letters or numbers
-            $searchSlug = strtolower($pasteBody . ' ' . $pasteNote);
+            //TODO - the htmlentification currently make this real weird
+            //$searchSlug = strtolower($pasteBody . ' ' . $pasteNote);
+            $searchSlug = $data['note'];
             $searchWords = array();
-            preg_match_all('/\b[^\b](\w{3,})\b/', $searchSlug, $searchWords);
+            preg_match_all('/\b[^\b]([a-zA-Z0-9]{3,})\b/', $searchSlug, $searchWords);
             foreach($searchWords[0] as $w) {
                 $this->sadd('search:' . trim($w), $pasteId);
             }
@@ -232,5 +266,34 @@ class RedisPaste extends Predis_Client {
         }    
              
         return $pasteId;
+    }
+
+    public function saveComment(Array $data)
+    {
+        try {
+            $commentId = $this->incr('global:commentIds');
+            
+            $commentBody = trim(htmlentities(stripslashes($data['body']),ENT_QUOTES));
+            $commentAuthor = trim(htmlentities(stripslashes($data['author']),ENT_QUOTES));
+            $commentData = array(
+                'body' => $commentBody,
+                'author' => $commentAuthor,
+                'date' => time(),
+            );
+            
+            $this->hmset('comment:' . $commentId, $commentData);
+            
+            //add to paste's comment list
+            $this->rpush('paste:' . $data['paste_id'] . ':comments', $commentId);
+
+            //remember the commenter's name
+            setcookie('rp_name', $commentAuthor, time()+60*60*24*365, '/');
+            $_COOKIE['rp_name'] = $commentAuthor;
+
+            
+        } catch (Exception $e) {
+            $this->redisError = $e->getMessage() . ' - Save Failed';
+            return;
+        }
     }
 }
